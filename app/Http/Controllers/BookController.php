@@ -52,9 +52,19 @@ class BookController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Book $book)
     {
-        //
+        // lazy loading is the same -> implement several queries
+        // $book->reviews()
+
+        // Carica il libro con il conteggio delle recensioni
+        $book = Book::withCount('reviews')->withAvg('reviews','rating')->findOrFail($book->id);
+        // Carica le recensioni più recenti
+        $book->load(['reviews' => function($query) {
+            $query->latest();
+        }]);
+
+        return view('books.show', ["book"=>$book]);
     }
 
     /**
