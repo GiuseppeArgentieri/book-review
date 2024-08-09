@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class BookController extends Controller
 {
@@ -28,8 +29,9 @@ class BookController extends Controller
             default=>$books->latestPersonal()
         };
 
-        $books = $books->get();
-
+        //$books = $books->get();
+        $cacheKey = 'books:' . $filter . ':' . $title;
+        $books = Cache::remember($cacheKey, 3600, fn() => $books->get());
         return view('books.index', ["books"=>$books]);
     }
 
@@ -52,17 +54,22 @@ class BookController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Book $book)
+    public function show(int $id)
     {
-        // lazy loading is the same -> implement several queries
-        // $book->reviews()
-
-        // Carica il libro con il conteggio delle recensioni
-        $book = Book::withCount('reviews')->withAvg('reviews','rating')->findOrFail($book->id);
-        // Carica le recensioni più recenti
-        $book->load(['reviews' => function($query) {
-            $query->latest();
-        }]);
+        // Book $books come parametro al posto di $id implementa la route model binding che fa automaticamente
+        // una query nel database -> se si vuole cachare per evitare query non è l'ideale
+        // lazy loading is the same -> implement several queries -> $book->reviews()
+        $cacheKey = 'book:' . $id;
+        $book = Cache::remember($cacheKey, 3600, function() use($id){
+            // Carica il libro con il conteggio delle recensioni
+            $res = Book::withCount('reviews')->withAvg('reviews','rating')->findOrFail($id);
+            // Carica le recensioni più recenti
+            $res->load(['reviews' => function($query) {
+                $query->latest();
+            }]);
+            return $res;
+            }
+        );
 
         return view('books.show', ["book"=>$book]);
     }
