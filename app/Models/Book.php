@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Support\Facades\Cache;
 
 class Book extends Model
 {
@@ -20,9 +21,14 @@ class Book extends Model
         return $query->where('title','LIKE','%'.$title.'%');
     }
 
+    public function scopeBookWithAvgAndCount(Builder $query): Builder | QueryBuilder
+    {
+        return $query->withCount('reviews')->withAvg('reviews','rating');
+    }
+
     public function scopeLatestPersonal(Builder $query) : Builder| QueryBuilder
     {
-        return $query->withCount('reviews')->withAvg('reviews','rating')->latest();
+        return $query->bookWithAvgAndCount()->latest();
     }
 
     public function scopePopular(Builder $query, $from = null, $to = null): Builder| QueryBuilder
@@ -82,5 +88,11 @@ class Book extends Model
         return $query->highestrated(now()->subMonth(6), now())
         ->popular(now()->subMonth(6), now())
         ->minreviews(5);
+    }
+
+    protected static function booted()
+    {
+        static::updated(fn(Book $book) => Cache::forget('book:' . $book->id));
+        static::deleted(fn(Book $book) => Cache::forget('book:' . $book->id));
     }
 }

@@ -62,7 +62,7 @@ class BookController extends Controller
         $cacheKey = 'book:' . $id;
         $book = Cache::remember($cacheKey, 3600, function() use($id){
             // Carica il libro con il conteggio delle recensioni
-            $res = Book::withCount('reviews')->withAvg('reviews','rating')->findOrFail($id);
+            $res = Book::bookWithAvgAndCount()->findOrFail($id);
             // Carica le recensioni più recenti
             $res->load(['reviews' => function($query) {
                 $query->latest();
