@@ -20,6 +20,11 @@ class Book extends Model
         return $query->where('title','LIKE','%'.$title.'%');
     }
 
+    public function scopeLatestPersonal(Builder $query) : Builder| QueryBuilder
+    {
+        return $query->withCount('reviews')->withAvg('reviews','rating')->latest();
+    }
+
     public function scopePopular(Builder $query, $from = null, $to = null): Builder| QueryBuilder
     {
         return $query->withCount([
@@ -49,5 +54,33 @@ class Book extends Model
         } elseif ($from && $to) {
             $query->whereBetween('created_at', [$from, $to]);
         }
+    }
+
+    public function scopePopularLastMonth(Builder $query): Builder | QueryBuilder
+    {
+        return $query->popular(now()->subMonth(), now())
+        ->highestrated(now()->subMonth(), now())
+        ->minreviews(2);
+    }
+
+    public function scopePopularLast6Months(Builder $query): Builder | QueryBuilder
+    {
+        return $query->popular(now()->subMonth(6), now())
+        ->highestrated(now()->subMonth(6), now())
+        ->minreviews(5);
+    }
+
+    public function scopeHighestRatedLastMonth(Builder $query): Builder | QueryBuilder
+    {
+        return $query->highestrated(now()->subMonth(), now())
+        ->popular(now()->subMonth(), now())
+        ->minreviews(2);
+    }
+
+    public function scopeHighestRatedLast6Months(Builder $query): Builder | QueryBuilder
+    {
+        return $query->highestrated(now()->subMonth(6), now())
+        ->popular(now()->subMonth(6), now())
+        ->minreviews(5);
     }
 }
