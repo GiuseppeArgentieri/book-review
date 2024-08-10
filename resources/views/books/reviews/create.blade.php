@@ -1,15 +1,18 @@
 @extends('layouts.app')
 
 @section('content')
-    @if (count($errors))
+    {{-- @if (count($errors))
     {{$errors}}
-    @endif
+    @endif --}}
   <h1 class="mb-10 text-2xl">Add Review for {{ $book->title }}</h1>
 
   <form method="POST" action="{{ route('books.reviews.store', $book) }}">
     @csrf
     <label for="review">Review</label>
     <textarea name="review" id="review" required class="input mb-4"></textarea>
+    @error('review')
+        <p style="color: red;">{{$message}}</p>
+    @enderror
 
     <label for="rating">Rating</label>
 
@@ -19,6 +22,9 @@
         <option value="{{ $i }}">{{ $i }}</option>
       @endfor
     </select>
+    @error('rating')
+        <p style="color: red;">{{$message}}</p>
+    @enderror
 
     <button type="submit" class="btn">Add Review</button>
   </form>

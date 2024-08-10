@@ -1,6 +1,11 @@
 @extends('layouts.app')
 
 @section('content')
+@if (session()->has('success'))
+    <div>
+        <p style="color: green;">{{session('success')}}</p>
+    </div>
+@endif
   <div class="mb-4">
     <h1 class="mb-2 text-2xl">{{ $book->title }}</h1>
 
